@@ -1,13 +1,27 @@
+import Config from '../../config';
 import {Order} from '../../models/order';
 import {Plate} from '../../models/plate';
 import {User} from '../../models/user';
-import Config from '../../config';
 import {CRUDRepository, SimulateRepository} from '../../utils/repository';
 
-const prefix = Config.dashboardPrefix;
-export const OrderRepo = new CRUDRepository<Order>(prefix+'/order');
-export const PlateRepo = new CRUDRepository<Plate>(prefix+'/plate');
-export const UserRepo = new CRUDRepository<User>(prefix+'/user');
-export const SimulateRepo = new SimulateRepository(prefix+'/simulate');
+const baseUrl = Config.serverUrl + Config.dashboardPrefix;
+export const OrderRepo = new CRUDRepository<Order>(baseUrl, '/order');
+export const PlateRepo = new CRUDRepository<Plate>(baseUrl, '/plate');
+export const UserRepo = new CRUDRepository<User>(baseUrl, '/user');
+export const SimulateRepo = new SimulateRepository(baseUrl + '/simulate');
 
-export default [OrderRepo, PlateRepo, UserRepo, SimulateRepo];
+export const repoSelector = (type:string) => {
+    switch (type.toLowerCase()) {
+    case 'order':
+        return OrderRepo;
+    case 'user':
+        return UserRepo;
+    case 'plate':
+        return PlateRepo;
+    default:
+        throw new Error('Repo Not exist!');
+    }
+};
+
+export const updateAllRepoToken = (token:string | null) =>
+    [OrderRepo, PlateRepo, UserRepo, SimulateRepo].forEach((repo) => repo.updateToken(token));

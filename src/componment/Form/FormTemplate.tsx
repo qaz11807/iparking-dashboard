@@ -1,38 +1,29 @@
 import classNames from 'classnames';
 import React from 'react';
-import {useState, useEffect} from 'react';
+import {useAppDispatch, useAppSelector} from '../../hook/useApp';
 import {Order} from '../../models/order';
 import {Plate} from '../../models/plate';
 import {User} from '../../models/user';
-import {isDifferent} from '../../utils/busy';
+import {actions} from '../../provider/DataTableProvider';
 import Forms, {FormType} from './Forms';
-export interface onSubmitProps<T> {
-    type: 'create' | 'update' | 'delete' | 'cancel'
-    alterData?: T
-    dataId?: number
-    callback?: VoidFunction
-}
-
-interface FormProps<T> {
-    initData: T
-    data?: T
-    formType: FormType
-    onSubmit: ({type, alterData, dataId, callback}: onSubmitProps<T>)=>void
-}
+import {createData, updateData, deleteData} from '../../features/service/serviceThunks';
 /**
  * @return {ReactElement} caption here
  */
-export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
-    const [unsavedData, setUnsavedData] = useState<T>(data ? data : initData);
-    const [isSaving, setSaving] = useState<boolean>(false);
-    const [isDeleting, setDeleting] = useState<boolean>(false);
-    const [isAlter, setAlter] = useState<boolean>(false);
-    const [isCreate, setCreate] = useState<boolean>(false);
+export function Form() {
+    const type = useAppSelector((state) => state.dataTable!.type);
+    const selected = useAppSelector((state) => state.dataTable!.selected);
+    const unsavedData = useAppSelector((state) => state.dataTable!.unsavedData);
+    const isUpdating = useAppSelector((state) => state.dataTable!.flags.isUpdating);
+    const isDeleting = useAppSelector((state) => state.dataTable!.flags.isDeleting);
+    const isAlter = useAppSelector((state) => state.dataTable!.flags.isAlter);
+
+    const dispatch = useAppDispatch();
 
     const saveBtnClass = classNames(
         'btn',
         {
-            'loading': isSaving,
+            'loading': isUpdating,
             'btn-primary': isAlter,
             'btn-disabled': !isAlter,
         },
@@ -42,43 +33,37 @@ export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
         'btn',
         {
             'loading': isDeleting,
-            'btn-warning': data ? true : false,
-            'btn-disabled': data ? false : true,
+            'btn-warning': selected ? true : false,
+            'btn-disabled': selected ? false : true,
         },
     );
 
-    useEffect(()=>{
-        setCreate(data === undefined);
-        setUnsavedData(data ? data : initData);
-    }, [data]);
-
-    useEffect(()=>{
-        setAlter(data ? isDifferent(data, unsavedData) : isDifferent(initData, unsavedData));
-    }, [unsavedData]);
-
-    const onClick = (e: React.MouseEvent) => {
+    const onClick = async (e: React.MouseEvent) => {
         e.preventDefault();
-        if (!data) {
-            setSaving(true);
-            onSubmit({type: 'create', alterData: unsavedData, callback: ()=>setSaving(false)});
+        if (!selected) {
+            await dispatch(createData({createdData: unsavedData}));
         } else {
             if (isAlter) {
-                setSaving(true);
-                onSubmit({
-                    type: 'update',
-                    alterData: unsavedData,
-                    dataId: (unsavedData as any).id,
-                    callback: ()=>setSaving(false),
-                });
+                await dispatch(updateData({updatedData: unsavedData}));
             }
         }
+    };
+
+    const onDelete = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        await dispatch(deleteData({dataId: selected.id}));
+    };
+
+    const onCancel = (e: React.MouseEvent) => {
+        e.preventDefault();
+        dispatch(actions.openModal(false));
     };
 
     /**
      * @param {Partial} field updated field.
      */
     function updateValue<T>(field: Partial<T>) {
-        setUnsavedData({...unsavedData, ...field});
+        dispatch(actions.setUnsavedData(field));
     };
 
     const renderForm = (type: FormType)=>{
@@ -86,7 +71,7 @@ export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
         case 'order':
             return (
                 <Forms.OrderForm
-                    isCreate={isCreate}
+                    isCreate={!selected}
                     data={unsavedData as any as Order}
                     updateValue={updateValue}
                 />
@@ -94,7 +79,7 @@ export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
         case 'plate':
             return (
                 <Forms.PlateForm
-                    isCreate={isCreate}
+                    isCreate={!selected}
                     data={unsavedData as any as Plate}
                     updateValue={updateValue}
                 />
@@ -102,7 +87,7 @@ export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
         case 'user':
             return (
                 <Forms.UserForm
-                    isCreate={isCreate}
+                    isCreate={!selected}
                     data={unsavedData as any as User}
                     updateValue={updateValue}
                 />
@@ -112,19 +97,12 @@ export function Form<T>({data, initData, formType, onSubmit}: FormProps<T>) {
 
     return (
         <form>
-            {renderForm(formType)}
+            {renderForm(type as FormType)}
             <div className="modal-action">
                 <button className={saveBtnClass} onClick={onClick}>Save</button>
                 <button className={delBtnClass}
-                    onClick={()=>{
-                        setDeleting(true);
-                        onSubmit({
-                            type: 'delete',
-                            dataId: (unsavedData as any).id,
-                            callback: ()=>setDeleting(false),
-                        });
-                    }}>Delete</button>
-                <button className="btn btn-outline" onClick={()=>onSubmit({type: 'cancel'})}>Close</button>
+                    onClick={onDelete}>Delete</button>
+                <button className="btn btn-outline" onClick={onCancel}>Close</button>
             </div>
         </form>
     );

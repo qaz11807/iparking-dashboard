@@ -1,28 +1,31 @@
 import React from 'react';
-import {PlateRepo} from '../api/service';
-import Table from '../componment/Table';
+import {DataTableConfig} from '../features/service/serviceSlice';
 import {Plate} from '../models/plate';
+import DataTableProvider from '../provider/DataTableProvider';
+// import Table from '../componment/Table';
+// import {Plate} from '../models/plate';
 
 /**
  * the page that related order operation
  * @return {ReactElement}
  */
 export default function PlatePage() {
-    const init: Plate = {
-        id: 0,
-        license: '',
+    const initialState: DataTableConfig<Plate> = {
+        type: 'plate',
+        defaultData: {
+            id: 0,
+            license: '',
+        },
+        keysExtractor: [
+            '#',
+            'License',
+            'Username',
+        ],
     };
 
     return (
-        <Table
-            keysExtractor={[
-                '#',
-                'License',
-                'Username',
-            ]}
-            formType={'plate'}
-            initData={init}
-            repo={PlateRepo}
+        <DataTableProvider
+            initialState={initialState}
         />
     );
 }

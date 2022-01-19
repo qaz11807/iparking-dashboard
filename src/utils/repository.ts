@@ -1,9 +1,8 @@
 import Axios, {AxiosInstance} from 'axios';
-import Config from '../config';
 import {ResponseFormat, ResponseStatus} from '../models/response';
 import {parseObject} from './busy';
 
-export interface PagenationOptions {
+export interface PaginationOptions {
     page?: number;
     pageSize?: number;
 }
@@ -14,11 +13,12 @@ export interface PagenationOptions {
 export class Repository {
     protected axiosInstance: AxiosInstance;
     /**
-     * @param {string} prefix url prefix;
+     * @param {string} baseUrl baseUrl;
+     * @param {string} prefix route prefix;
      */
-    constructor(prefix = '') {
+    constructor(baseUrl: string, prefix = '') {
         this.axiosInstance = Axios.create({
-            baseURL: Config.serverUrl + prefix,
+            baseURL: baseUrl + prefix,
         });
         this.axiosInstance.interceptors.response.use(
             (response) => {
@@ -29,26 +29,27 @@ export class Repository {
                 return response;
             },
             (error) => {
+                let errMsg;
                 if (error.response) {
                     switch (error.response.status) {
                     case 404:
-                        console.log('Page not found!');
+                        errMsg = 'Page not found!';
                         break;
                     case 500:
-                        console.log('Server Internal Error');
+                        errMsg = 'Server Internal Error!';
                         break;
                     default:
-                        console.log(error.message);
+                        errMsg = error.message;
                     }
                     if (error.response.data.errors) {
                         error.response.data.errors.forEach((error: Error) => {
-                            console.log(error);
+                            console.error(error);
                         });
                     } else {
-                        console.log(error.response.data);
+                        errMsg = error.response.data;
                     }
                 };
-                return Promise.reject(error);
+                return Promise.reject(errMsg);
             },
         );
     }
@@ -116,9 +117,9 @@ export class CRUDRepository<T> extends Repository {
      * @param {PagenationOptions} options
      * @return {T[]}
      */
-    async getAll(options?: PagenationOptions) {
+    async getAll(options?: PaginationOptions) {
         try {
-            const response = await this.axiosInstance.get('/', {params: options});
+            const response = await this.axiosInstance.get(`/`, {params: options});
             if (response.data.status === ResponseStatus.Failed) {
                 throw new Error(response.data.error);
             }
@@ -134,7 +135,7 @@ export class CRUDRepository<T> extends Repository {
      */
     async create(createdData: T) {
         try {
-            const response = await this.axiosInstance.post('/', createdData);
+            const response = await this.axiosInstance.post(`/`, createdData);
             if (response.data.status === ResponseStatus.Failed) {
                 throw new Error(response.data.error);
             }

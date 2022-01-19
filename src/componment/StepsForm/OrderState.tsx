@@ -16,7 +16,7 @@ export default function OrderState({order, handler}: OrderStateProps) {
     return (
         <Card
             title={'Order'}
-            actionLabel={'Tracking'}
+            actionLabel={'UnTracking'}
             onAction={()=>{
                 handler();
             }}

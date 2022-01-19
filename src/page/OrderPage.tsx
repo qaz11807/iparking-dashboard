@@ -1,6 +1,6 @@
 import React from 'react';
-import {OrderRepo} from '../api/service';
-import Table from '../componment/Table';
+import DataTableProvider from '../provider/DataTableProvider';
+import {DataTableConfig} from '../features/service/serviceSlice';
 import {Order, Status} from '../models/order';
 
 /**
@@ -8,28 +8,30 @@ import {Order, Status} from '../models/order';
  * @return {ReactElement}
  */
 export default function OrderPage() {
-    const init: Order = {
-        id: 0,
-        enterTime: new Date(),
-        exitTime: null,
-        status: Status.pending,
-        tradeAmount: null,
+    const initialState: DataTableConfig<Order> = {
+        type: 'order',
+        defaultData: {
+            id: 0,
+            enterTime: new Date(),
+            exitTime: null,
+            status: Status.pending,
+            tradeAmount: null,
+        },
+        keysExtractor: [
+            '#',
+            'Enter Time',
+            'Exit Time',
+            'Status',
+            'Trade Amount',
+            'License',
+            'Username',
+        ],
     };
 
     return (
-        <Table
-            keysExtractor={[
-                '#',
-                'Enter Time',
-                'Exit Time',
-                'Status',
-                'Trade Amount',
-                'License',
-                'Username',
-            ]}
-            formType={'order'}
-            initData={init}
-            repo={OrderRepo}
+        <DataTableProvider
+            initialState={initialState}
         />
     );
 }
+

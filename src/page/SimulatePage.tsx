@@ -1,7 +1,7 @@
 import React from 'react';
 import {useEffect, useState} from 'react';
 import {manager} from '../api/ws';
-import Step from '../componment/Step';
+import Step from '../componment/StepsForm/Step';
 import SimulateEnter, {handleEnterAndTracking} from '../componment/StepsForm/SimulateEnter';
 import SimulateExit, {handleExit} from '../componment/StepsForm/SimulateExit';
 import OrderState from '../componment/StepsForm/OrderState';
@@ -67,6 +67,11 @@ export default function SimulatePage() {
                     <OrderState
                         order={order}
                         handler={()=>{
+                            if (socket) {
+                                socket.removeListener(`order:${order.id}`);
+                                setOrder(null);
+                                setStep(1);
+                            }
                         }}
                     />
             }

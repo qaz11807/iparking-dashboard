@@ -1,6 +1,9 @@
 import React, {Fragment} from 'react';
+import {useEffect} from 'react';
 import {Route, Routes} from 'react-router-dom';
 import Sidebar from '../componment/Sidebar';
+import {getUserInfo} from '../features/auth/authSlice';
+import {useAppDispatch} from '../hook/useApp';
 import OrderPage from './OrderPage';
 import PlatePage from './PlatePage';
 import SimulatePage from './SimulatePage';
@@ -10,6 +13,10 @@ import UserPage from './UserPage';
   * @return {ReactElement} caption here
   */
 export default function Dashboard() {
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        dispatch(getUserInfo());
+    }, []);
     return (
         <Routes>
             <Route path="/" element={

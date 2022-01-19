@@ -18,7 +18,6 @@ export function useWebsocket(manager: Manager) {
     useEffect(() => {
         if (socket) {
             socket.on('connect', () => {
-                console.log(socket.id);
             });
             socket.on('close', () => {
                 setSocket(null);

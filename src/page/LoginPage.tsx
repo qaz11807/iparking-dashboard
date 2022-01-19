@@ -1,11 +1,11 @@
 import React from 'react';
 import {useState, useEffect} from 'react';
 import Logo from '../logo.svg';
-import {AlertParams, MessageAlert} from '../componment/MessageAlert';
 import {useNavigate} from 'react-router-dom';
-import {useAuth} from '../hook/useAuth';
 import {InputText} from '../componment/Form/FormInputs';
-
+import {useAppSelector, useAppDispatch} from '../hook/useApp';
+import {signIn} from '../features/auth/authSlice';
+import {MessageQueue} from '../componment/MessageQueue';
 interface LoginForm {
     username: string;
     password: string;
@@ -16,33 +16,31 @@ interface LoginForm {
   */
 export default function LoginPage() {
     const navigate = useNavigate();
-    const auth = useAuth();
+    const msgQueue = useAppSelector((state) => state.message.msgQueue);
+    const token = useAppSelector((state) => state.auth.token);
+    const isFetching = useAppSelector((state) => state.auth.isFetching);
+    const dispatch = useAppDispatch();
     const [form, setForm] = useState<LoginForm>({
         username: '',
         password: '',
     });
-    const [showAlert, setShowAlert] = useState(false);
-    const [alert, setAlert] = useState<AlertParams>({
-        type: '',
-        message: '',
-    });
 
     useEffect(() => {
-        if (auth.token) {
+        if (token) {
             navigate('/', {replace: true});
-            setShowAlert(false);
         }
-        return () => {
-        };
-    }, [auth.token]);
+    }, [token]);
 
-    const onClick = (e: React.MouseEvent<HTMLElement>) => {
+    const onClick = async (e: React.MouseEvent<HTMLElement>) => {
         e.preventDefault();
-        auth.signin(form.username, form.password, ({type, message}: AlertParams) => {
-            setAlert({type, message});
-            setShowAlert(true);
-        });
+        await dispatch(
+            signIn({
+                username: form.username,
+                password: form.password,
+            }),
+        );
     };
+
     return (
         <form className="p-6 max-w-sm mx-auto rounded-xl shadow-lg items-center bg-white">
             <div className='flex justify-center'>
@@ -61,10 +59,13 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(e)=>setForm({...form, password: e.target.value})}
             ></InputText>
-            {showAlert && <MessageAlert type={alert.type} message={alert.message} />}
             <div className='flex justify-center m-2'>
-                <button className="btn btn-sm btn-primary btn-outline" onClick={onClick}>Login</button>
+                <button
+                    className={`btn btn-sm btn-primary btn-outline ${isFetching? 'loading' : ''}`}
+                    onClick={onClick}
+                >Login</button>
             </div>
+            <MessageQueue messages={msgQueue}/>
         </form>
     );
 }

@@ -1,11 +1,14 @@
 import React from 'react';
 import {Link, Outlet} from 'react-router-dom';
+import {useAppSelector} from '../hook/useApp';
+import {MessageQueue} from './MessageQueue';
 import Navbar from './Navbar';
 /**
   * Sidebar.
   * @return {ReactElement} caption here
   */
 export default function Sidebar() {
+    const msgQueue = useAppSelector((state) => state.message.msgQueue);
     return (
         <div className="bg-base-100 drawer drawer-mobile h-screen">
             <input id="my-drawer-2" type="checkbox" className="drawer-toggle"></input>
@@ -33,6 +36,7 @@ export default function Sidebar() {
                     </li>
                 </ul>
             </div>
+            <MessageQueue messages={msgQueue}/>
         </div>
     );
 };
